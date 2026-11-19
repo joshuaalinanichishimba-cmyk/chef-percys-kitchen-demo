@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="/owner/assets/dashboard.css">
 <script type="module" src="/owner/assets/dashboard.js"></script>
 <script type="module" src="/owner/assets/bookings.js"></script>
+<script type="module" src="/owner/assets/digital.js"></script>
 </head>
 <body>
 <main>
@@ -52,6 +53,34 @@
     </form>
     <p id="payment-status" role="status"></p>
     <ul id="payment-list"></ul>
+  </section>
+  <section class="order-queue" aria-labelledby="digital-title">
+    <h2 id="digital-title">Recipes and cookbooks</h2>
+    <form id="digital-product">
+      <label>Title <input name="title" maxlength="150" required></label>
+      <label>Description <textarea name="description" maxlength="800" required></textarea></label>
+      <label>Type <select name="kind"><option value="recipe">Recipe</option><option value="cookbook">Cookbook</option></select></label>
+      <label>Price (K) <input name="price" type="number" min="0.01" max="1000000" step="0.01" required></label>
+      <button type="submit">Save draft</button>
+      <button type="reset">New draft</button>
+    </form>
+    <p id="digital-status" role="status"></p>
+    <ul id="digital-items"></ul>
+    <form id="digital-sale">
+      <h3>Record a verified sale</h3>
+      <label>Product <select name="product" required></select></label>
+      <label>Channel <select name="channel">
+        <option value="airtel">Airtel Money</option><option value="mtn">MTN MoMo</option>
+        <option value="cash">Cash receipt</option><option value="bank">Bank transfer</option>
+      </select></label>
+      <label>Transaction or receipt reference <input name="transaction_reference" maxlength="80" required></label>
+      <label>Amount received (K) <input name="amount" type="number" min="0.01" max="1000000" step="0.01" required></label>
+      <label><input name="verified" type="checkbox" required> I verified that this payment was received in full</label>
+      <button type="submit" value="create">Create download code</button>
+      <button type="submit" value="replace">Replace download code</button>
+      <p id="digital-sale-status" role="status"></p>
+      <label id="digital-code-label" hidden>Download code to share with the buyer <input id="digital-code" readonly></label>
+    </form>
   </section>
   <div class="layout">
     <section aria-labelledby="entries-title">

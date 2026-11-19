@@ -69,3 +69,11 @@ Customers can look up their order reference and refresh its latest status. Confi
 - The owner verifies a payment against the wallet, bank or receipt before recording it. Records are tied to a food order or catering inquiry. Duplicate transaction references cannot credit multiple requests. Food balances exclude delivery charges. Use unique receipt references for cash.
 - The app tracks verified amounts and outstanding balances. It does not initiate charges, validate provider transactions automatically, or issue refunds. A cancelled booking retains its payment history for reconciliation.
 - The Windows launcher opens both the customer menu and the owner dashboard once FastAPI is ready. Use the `owner` password printed in the launcher window. Open the kitchen board separately with the kitchen credential.
+
+## Phase 6: recipes and cookbooks
+
+Create a draft in the owner dashboard, attach a PDF up to 10 MB, and publish it. Set the title, description, type and price in ZMW. The customer Recipes page shows published products and directs purchase inquiries to WhatsApp. The catalogue starts empty until Percy adds his material.
+
+After confirming receipt of the full price, record the sale with its payment channel and transaction reference. Share the generated download code privately. Buyers enter it on the Recipes page. The code expires in seven days, the database stores only its hash, and duplicate payment references cannot create additional sales. If a code is lost or expires, use Replace download code with the original product, amount and transaction reference. Replacement invalidates the old code. Hiding a product preserves existing download access. To release a revised PDF after sales, create a new draft and hide the previous edition.
+
+The Windows launcher reserves port 8000 and verifies its new owner login before opening both pages. Use the password printed by that same launcher run. If port 8000 is busy, close the old server before starting the launcher again.

@@ -69,7 +69,7 @@ def owner_dashboard():
 
 @owner.get("/owner/assets/{filename}", response_class=FileResponse)
 def owner_assets(filename: str):
-    if filename not in {"dashboard.js", "dashboard.css", "bookings.js"}:
+    if filename not in {"dashboard.js", "dashboard.css", "bookings.js", "digital.js"}:
         raise HTTPException(404)
     return FileResponse(OWNER_FILES / filename, headers={**PRIVATE, "X-Content-Type-Options": "nosniff"})
 

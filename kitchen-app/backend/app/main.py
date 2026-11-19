@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from .database import get_engine
+from .digital import router as digital
 from .bookings import router as bookings
 from .menu import owner, router as menu
 from .models import BusinessProfile
@@ -54,6 +55,7 @@ def business() -> PublicBusinessProfile:
 
 
 app.include_router(menu)
+app.include_router(digital)
 app.include_router(bookings)
 app.include_router(orders)
 app.include_router(kitchen)

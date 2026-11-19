@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import BigInteger, CheckConstraint, Date, DateTime, ForeignKey, JSON, String, UniqueConstraint, func
+from sqlalchemy import BigInteger, CheckConstraint, Date, DateTime, ForeignKey, JSON, LargeBinary, String, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -97,13 +97,35 @@ class VerifiedPayment(Base):
     __table_args__ = (
         UniqueConstraint("channel", "transaction_reference", name="uq_verified_payment_reference"),
         CheckConstraint("amount_ngwee > 0", name="ck_verified_payment_amount"),
-        CheckConstraint("(order_reference IS NULL) <> (catering_reference IS NULL)", name="ck_verified_payment_target"),
+        CheckConstraint("num_nonnulls(order_reference, catering_reference, digital_reference) = 1", name="ck_verified_payment_target"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     order_reference: Mapped[str | None] = mapped_column(ForeignKey("customer_order.reference"), index=True)
     catering_reference: Mapped[str | None] = mapped_column(ForeignKey("catering_inquiry.reference"), index=True)
+    digital_reference: Mapped[str | None] = mapped_column(ForeignKey("digital_purchase.reference"), unique=True)
     channel: Mapped[str] = mapped_column(String(12))
     transaction_reference: Mapped[str] = mapped_column(String(80))
     amount_ngwee: Mapped[int] = mapped_column(BigInteger)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class DigitalProduct(Base):
+    __tablename__ = "digital_product"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(150))
+    description: Mapped[str] = mapped_column(String(800))
+    kind: Mapped[str] = mapped_column(String(16))
+    price_ngwee: Mapped[int] = mapped_column(BigInteger)
+    published: Mapped[bool] = mapped_column(server_default="false")
+    pdf: Mapped[bytes | None] = mapped_column(LargeBinary, deferred=True)
+
+
+class DigitalPurchase(Base):
+    __tablename__ = "digital_purchase"
+
+    reference: Mapped[str] = mapped_column(String(36), primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("digital_product.id"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

@@ -52,3 +52,6 @@ h1{font-size:clamp(2.8rem,7vw,6.3rem);letter-spacing:-.05em} h1 em{color:#ffc278
 .cart-lines li{display:flex;align-items:center;gap:.5rem;padding:.35rem 0}
 .cart-lines li>span:first-child{flex:1}
 .button:disabled{opacity:.6;cursor:default}
+@media (min-width: 701px) and (max-width: 1150px) {
+  nav { gap: clamp(9px, 1.35vw, 16px); }
+}

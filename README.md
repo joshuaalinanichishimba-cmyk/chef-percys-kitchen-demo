@@ -6,8 +6,8 @@ Chèf Percy’s Kitchen is a food ordering, catering and kitchen operations syst
 
 | Area | Features |
 | --- | --- |
-| Customer site | Browse food and menu prices, submit pickup or Yango delivery requests, track orders, request catering and check quotes or booking status. |
-| Business dashboard | Edit the menu, set daily order limits, manage orders and catering bookings, and record payments after checking that they were received. |
+| Customer site | Browse food and menu prices, submit pickup or Yango delivery requests, track orders, request catering, check quotes, and buy or download published recipes and cookbooks. |
+| Business dashboard | Edit the menu, set daily order limits, manage orders and catering bookings, and record payments after checking that they were received. Publish recipe or cookbook PDFs and issue protected download codes. |
 | Kitchen board | See confirmed meals, start preparation and mark tickets ready. Uses separate staff credentials. |
 
 Owner and kitchen routes require separate credentials. The customer site does not expose contact details submitted with orders or inquiries to other customers. Payment records are checked manually by the owner. Live merchant collection is pending provider configuration.
