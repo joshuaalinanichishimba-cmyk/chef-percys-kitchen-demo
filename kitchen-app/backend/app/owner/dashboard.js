@@ -83,6 +83,31 @@ const orderList = document.querySelector('#orders')
 const refreshOrdersButton = document.querySelector('#refresh-orders')
 const currency = new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW' })
 
+const nextStatus = {
+  received: [['confirmed', 'Confirm'], ['cancelled', 'Cancel']],
+  confirmed: [['preparing', 'Start preparing'], ['cancelled', 'Cancel']],
+  preparing: [['ready', 'Mark ready'], ['cancelled', 'Cancel']],
+  ready: [['completed', 'Complete'], ['cancelled', 'Cancel']],
+}
+
+async function changeOrderStatus(order, target, actions) {
+  if (target === 'cancelled' && !confirm('Cancel this order request?')) return
+  for (const button of actions.children) button.disabled = true
+  try {
+    const response = await fetch('/owner/api/orders/' + encodeURIComponent(order.reference) + '/status', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Owner-Action': 'menu-edit' },
+      body: JSON.stringify({ status: target }),
+    })
+    if (!response.ok) throw new Error('Could not change status. Refresh the order list and try again.')
+    await refreshOrders()
+  } catch (error) {
+    orderStatus.textContent = error.message
+  } finally {
+    for (const button of actions.children) button.disabled = false
+  }
+}
+
 async function refreshOrders() {
   refreshOrdersButton.disabled = true
   orderStatus.textContent = 'Loading order requests…'
@@ -104,7 +129,18 @@ async function refreshOrders() {
       items.textContent = order.items.map(line => line.quantity + ' × ' + line.name + ' ' + line.option).join(', ')
       const reference = document.createElement('small')
       reference.textContent = order.reference
-      row.append(heading, summary, items, reference)
+      const state = document.createElement('p')
+      state.textContent = 'Status: ' + order.status
+      const actions = document.createElement('div')
+      actions.className = 'order-actions'
+      for (const [target, label] of nextStatus[order.status] ?? []) {
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.textContent = label
+        button.addEventListener('click', () => changeOrderStatus(order, target, actions))
+        actions.append(button)
+      }
+      row.append(heading, summary, items, reference, state, actions)
       return row
     }))
     orderStatus.textContent = orders.length ? '' : 'No order requests yet.'
@@ -117,3 +153,34 @@ async function refreshOrders() {
 
 refreshOrdersButton.addEventListener('click', refreshOrders)
 refreshOrders()
+
+const capacity = document.querySelector('#capacity')
+const capacityInput = capacity.elements.namedItem('daily_limit')
+const capacityStatus = document.querySelector('#capacity-status')
+const capacitySubmit = capacity.querySelector('button')
+
+async function updateCapacity(options) {
+  capacitySubmit.disabled = true
+  try {
+    const response = await fetch('/owner/api/capacity', options)
+    if (!response.ok) throw new Error('Could not load or save the order limit.')
+    const data = await response.json()
+    capacityInput.value = data.daily_limit ?? ''
+    capacityStatus.textContent = data.requests_today + ' requests today. ' +
+      (data.daily_limit === null ? 'No daily limit.' : 'Daily limit: ' + data.daily_limit + '.')
+  } catch (error) {
+    capacityStatus.textContent = error.message
+  } finally {
+    capacitySubmit.disabled = false
+  }
+}
+
+capacity.addEventListener('submit', event => {
+  event.preventDefault()
+  updateCapacity({
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-Owner-Action': 'menu-edit' },
+    body: JSON.stringify({ daily_limit: capacityInput.value === '' ? null : capacityInput.valueAsNumber }),
+  })
+})
+updateCapacity()

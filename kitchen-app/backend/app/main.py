@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from .database import get_engine
 from .menu import owner, router as menu
 from .models import BusinessProfile
-from .orders import router as orders
+from .orders import kitchen, router as orders
 
 app = FastAPI(title="Chèf Percy’s Kitchen API", version="0.1.0")
 
@@ -54,6 +54,7 @@ def business() -> PublicBusinessProfile:
 
 app.include_router(menu)
 app.include_router(orders)
+app.include_router(kitchen)
 app.include_router(owner)
 
 dist = Path(__file__).resolve().parents[2] / "dist"

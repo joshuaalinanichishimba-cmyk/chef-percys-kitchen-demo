@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, JSON, String, func
+from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, JSON, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -44,10 +44,32 @@ class CustomerOrder(Base):
 
     reference: Mapped[str] = mapped_column(String(36), primary_key=True)
     request_hash: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(16), server_default="received")
     customer_name: Mapped[str] = mapped_column(String(120))
     phone: Mapped[str] = mapped_column(String(24))
     fulfillment: Mapped[str] = mapped_column(String(10))
     address: Mapped[str] = mapped_column(String(400))
     items: Mapped[list[dict]] = mapped_column(JSON)
     total_ngwee: Mapped[int] = mapped_column(BigInteger)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class OrderSettings(Base):
+    __tablename__ = "order_settings"
+    __table_args__ = (
+        CheckConstraint("id = 1", name="ck_order_settings_singleton"),
+        CheckConstraint("daily_limit IS NULL OR daily_limit > 0", name="ck_order_settings_limit"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    daily_limit: Mapped[int | None]
+
+
+class OrderStatusEvent(Base):
+    __tablename__ = "order_status_event"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    reference: Mapped[str] = mapped_column(ForeignKey("customer_order.reference", ondelete="CASCADE"), index=True)
+    actor: Mapped[str] = mapped_column(String(16))
+    status: Mapped[str] = mapped_column(String(16))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -11,6 +11,16 @@
 <main>
   <header><p>CHÈF PERCY’S KITCHEN · OWNER</p><h1>Menu management</h1></header>
   <p id="status" role="status"></p>
+  <section class="order-queue" aria-labelledby="capacity-title">
+    <h2 id="capacity-title">Daily order limit</h2>
+    <form id="capacity">
+      <label>Maximum requests per Kitwe day
+        <input name="daily_limit" type="number" min="1" max="10000" step="1" placeholder="Unlimited">
+      </label>
+      <p id="capacity-status" role="status"></p>
+      <button type="submit">Save limit</button>
+    </form>
+  </section>
   <section class="order-queue" aria-labelledby="orders-title">
     <h2 id="orders-title">Recent order requests</h2>
     <button id="refresh-orders" type="button">Refresh orders</button>

@@ -1,17 +1,31 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from typing import Annotated, Literal
+from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
-from .menu import Database, PRIVATE, owner
-from .models import CustomerOrder, MenuEntry
+from .menu import CSP, Database, PRIVATE, WriteRequest, owner
+from .models import CustomerOrder, MenuEntry, OrderSettings, OrderStatusEvent
+from .owner_auth import require_kitchen
 
 router = APIRouter()
+kitchen = APIRouter(dependencies=[Depends(require_kitchen)], include_in_schema=False)
+KITCHEN_FILES = Path(__file__).with_name("kitchen")
+KITWE = timezone(timedelta(hours=2))
+Status = Literal["received", "confirmed", "preparing", "ready", "completed", "cancelled"]
+NEXT = {
+    "received": ("confirmed", "cancelled"),
+    "confirmed": ("preparing", "cancelled"),
+    "preparing": ("ready", "cancelled"),
+    "ready": ("completed", "cancelled"),
+}
+KITCHEN_STEPS = {"confirmed": ("preparing",), "preparing": ("ready",)}
 
 
 class OrderLine(BaseModel):
@@ -58,7 +72,7 @@ class Receipt(BaseModel):
     items: list[ReceiptLine]
     total_ngwee: int
     created_at: datetime
-    status: Literal["received"] = "received"
+    status: Status
 
 
 class OwnerOrder(Receipt):
@@ -81,6 +95,13 @@ def submit_order(data: OrderRequest, db: Database, response: Response):
     existing = db.get(CustomerOrder, reference)
     if existing is not None:
         return match_request(existing, request_hash)
+
+    settings = db.get_one(OrderSettings, 1, with_for_update=True)
+    existing = db.get(CustomerOrder, reference)
+    if existing is not None:
+        return match_request(existing, request_hash)
+    if settings.daily_limit is not None and requests_today(db) >= settings.daily_limit:
+        raise HTTPException(409, "Today's order request limit has been reached.")
 
     menu = db.scalars(
         select(MenuEntry).where(MenuEntry.id.in_([line.menu_id for line in data.lines])).with_for_update(read=True)
@@ -126,3 +147,98 @@ def get_receipt(reference: UUID, db: Database, response: Response):
 def recent_orders(db: Database, response: Response):
     response.headers.update(PRIVATE)
     return db.scalars(select(CustomerOrder).order_by(CustomerOrder.created_at.desc()).limit(50)).all()
+
+
+def requests_today(db: Database) -> int:
+    start = datetime.now(KITWE).replace(hour=0, minute=0, second=0, microsecond=0)
+    return db.scalar(select(func.count()).select_from(CustomerOrder).where(
+        CustomerOrder.created_at >= start, CustomerOrder.created_at < start + timedelta(days=1)
+    )) or 0
+
+
+class Capacity(BaseModel):
+    daily_limit: int | None = Field(ge=1, le=10000, strict=True)
+
+
+class CapacityView(Capacity):
+    requests_today: int
+
+
+@owner.get("/owner/api/capacity", response_model=CapacityView)
+def owner_capacity(db: Database, response: Response):
+    response.headers.update(PRIVATE)
+    return CapacityView(daily_limit=db.get_one(OrderSettings, 1).daily_limit, requests_today=requests_today(db))
+
+
+@owner.put("/owner/api/capacity", response_model=CapacityView, dependencies=[WriteRequest])
+def set_capacity(data: Capacity, db: Database, response: Response):
+    db.get_one(OrderSettings, 1, with_for_update=True).daily_limit = data.daily_limit
+    db.commit()
+    return owner_capacity(db, response)
+
+
+class StatusChange(BaseModel):
+    status: Status
+
+
+def transition(db: Database, reference: UUID, target: Status, actor: str) -> CustomerOrder:
+    order = db.get(CustomerOrder, str(reference), with_for_update=True)
+    if order is None:
+        raise HTTPException(404, "Order not found.", headers=PRIVATE)
+    allowed = KITCHEN_STEPS if actor == "kitchen" else NEXT
+    if target not in allowed.get(order.status, ()):
+        raise HTTPException(409, "That change is unavailable. Refresh the order list.", headers=PRIVATE)
+    order.status = target
+    db.add(OrderStatusEvent(reference=order.reference, actor=actor, status=target))
+    db.commit()
+    return order
+
+
+@owner.put("/owner/api/orders/{reference}/status", response_model=OwnerOrder, dependencies=[WriteRequest])
+def owner_status(reference: UUID, data: StatusChange, db: Database, response: Response):
+    response.headers.update(PRIVATE)
+    return transition(db, reference, data.status, "owner")
+
+
+class KitchenLine(BaseModel):
+    name: str
+    option: str
+    quantity: int
+
+
+class KitchenOrder(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    reference: str
+    status: Status
+    fulfillment: Literal["pickup", "delivery"]
+    items: list[KitchenLine]
+    created_at: datetime
+
+
+@kitchen.get("/kitchen", response_class=FileResponse)
+def kitchen_page():
+    return FileResponse(KITCHEN_FILES / "index.html", headers={**PRIVATE, "Content-Security-Policy": CSP})
+
+
+@kitchen.get("/kitchen/assets/{filename}", response_class=FileResponse)
+def kitchen_asset(filename: str):
+    paths = {"board.js": KITCHEN_FILES / "board.js",
+             "board.css": KITCHEN_FILES.parent / "owner" / "dashboard.css"}
+    if filename not in paths:
+        raise HTTPException(404, headers=PRIVATE)
+    return FileResponse(paths[filename], headers={**PRIVATE, "X-Content-Type-Options": "nosniff"})
+
+
+@kitchen.get("/kitchen/api/orders", response_model=list[KitchenOrder])
+def kitchen_orders(db: Database, response: Response):
+    response.headers.update(PRIVATE)
+    return db.scalars(select(CustomerOrder).where(
+        CustomerOrder.status.in_(("confirmed", "preparing", "ready"))
+    ).order_by(CustomerOrder.created_at, CustomerOrder.reference)).all()
+
+
+@kitchen.put("/kitchen/api/orders/{reference}/status", response_model=KitchenOrder, dependencies=[WriteRequest])
+def kitchen_status(reference: UUID, data: StatusChange, db: Database, response: Response):
+    response.headers.update(PRIVATE)
+    return transition(db, reference, data.status, "kitchen")

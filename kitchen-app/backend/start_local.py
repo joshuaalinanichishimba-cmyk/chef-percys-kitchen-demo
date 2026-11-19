@@ -34,6 +34,10 @@ def main() -> None:
     subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)
 
     os.environ["OWNER_PASSWORD"] = secrets.token_urlsafe(32)
+    os.environ["KITCHEN_PASSWORD"] = secrets.token_urlsafe(32)
+    print("Kitchen board: http://127.0.0.1:8000/kitchen", flush=True)
+    print("Kitchen username: kitchen", flush=True)
+    print("Kitchen password for this run:", os.environ["KITCHEN_PASSWORD"], flush=True)
     print("Owner dashboard: http://127.0.0.1:8000/owner", flush=True)
     print("Dashboard username: owner", flush=True)
     print("Dashboard password for this run:", os.environ["OWNER_PASSWORD"], flush=True)
