@@ -16,7 +16,7 @@ const catering = whatsapp('Hi Chef Percy, I’d like to enquire about catering f
           <p class="hero-text">Shawarma platters, wings and braai spreads, made fresh to order by Chef Percy Chanda.</p>
           <div class="actions">
             <a class="button" :href="preorder">Pre-order on WhatsApp</a>
-            <RouterLink class="button outline" to="/food">Explore our food</RouterLink>
+            <RouterLink class="button outline" to="/menu">View the menu</RouterLink>
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ const route = useRoute()
 const open = ref(false)
 const navigation = [
   { name: 'home', label: 'Home' }, { name: 'food', label: 'Our food' },
+  { name: 'menu', label: 'Menu' },
   { name: 'catering', label: 'Catering' }, { name: 'about', label: 'Meet Percy' },
   { name: 'contact', label: 'Contact' },
 ]

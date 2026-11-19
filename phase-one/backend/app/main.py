@@ -1,10 +1,14 @@
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from .database import get_engine
+from .menu import owner, router as menu
 from .models import BusinessProfile
 
 app = FastAPI(title="Chèf Percy’s Kitchen API", version="0.1.0")
@@ -45,3 +49,11 @@ def business() -> PublicBusinessProfile:
             return PublicBusinessProfile.model_validate(profile)
     except (RuntimeError, SQLAlchemyError) as error:
         raise HTTPException(503, "Database is not ready.") from error
+
+
+app.include_router(menu)
+app.include_router(owner)
+
+dist = Path(__file__).resolve().parents[2] / "dist"
+if dist.is_dir():
+    app.mount("/", StaticFiles(directory=dist, html=True), name="customer")
