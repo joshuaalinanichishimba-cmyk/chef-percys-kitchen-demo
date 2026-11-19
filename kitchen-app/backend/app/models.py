@@ -1,4 +1,6 @@
-from sqlalchemy import CheckConstraint, String
+from datetime import datetime
+
+from sqlalchemy import BigInteger, CheckConstraint, DateTime, JSON, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -35,3 +37,17 @@ class MenuEntry(Base):
     max_price_ngwee: Mapped[int | None]
     starting_at: Mapped[bool]
     available: Mapped[bool]
+
+
+class CustomerOrder(Base):
+    __tablename__ = "customer_order"
+
+    reference: Mapped[str] = mapped_column(String(36), primary_key=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    customer_name: Mapped[str] = mapped_column(String(120))
+    phone: Mapped[str] = mapped_column(String(24))
+    fulfillment: Mapped[str] = mapped_column(String(10))
+    address: Mapped[str] = mapped_column(String(400))
+    items: Mapped[list[dict]] = mapped_column(JSON)
+    total_ngwee: Mapped[int] = mapped_column(BigInteger)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

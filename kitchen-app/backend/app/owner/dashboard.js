@@ -77,3 +77,43 @@ form.addEventListener('submit', async event => {
   }
 })
 refresh().catch(error => { status.textContent = error.message })
+
+const orderStatus = document.querySelector('#orders-status')
+const orderList = document.querySelector('#orders')
+const refreshOrdersButton = document.querySelector('#refresh-orders')
+const currency = new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW' })
+
+async function refreshOrders() {
+  refreshOrdersButton.disabled = true
+  orderStatus.textContent = 'Loading order requests…'
+  try {
+    const response = await fetch('/owner/api/orders')
+    if (!response.ok) throw new Error('Could not load orders (' + response.status + ').')
+    const orders = await response.json()
+    orderList.replaceChildren(...orders.map(order => {
+      const row = document.createElement('li')
+      const heading = document.createElement('strong')
+      heading.textContent = order.customer_name + ' · ' + order.phone
+      const summary = document.createElement('p')
+      summary.textContent = [
+        new Date(order.created_at).toLocaleString('en-ZM', { timeZone: 'Africa/Johannesburg' }),
+        order.fulfillment === 'pickup' ? 'Pickup' : 'Yango · ' + order.address,
+        currency.format(order.total_ngwee / 100),
+      ].join(' · ')
+      const items = document.createElement('p')
+      items.textContent = order.items.map(line => line.quantity + ' × ' + line.name + ' ' + line.option).join(', ')
+      const reference = document.createElement('small')
+      reference.textContent = order.reference
+      row.append(heading, summary, items, reference)
+      return row
+    }))
+    orderStatus.textContent = orders.length ? '' : 'No order requests yet.'
+  } catch (error) {
+    orderStatus.textContent = error.message
+  } finally {
+    refreshOrdersButton.disabled = false
+  }
+}
+
+refreshOrdersButton.addEventListener('click', refreshOrders)
+refreshOrders()

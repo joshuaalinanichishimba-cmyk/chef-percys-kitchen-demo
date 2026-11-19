@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import Checkout from './Checkout.vue'
+import { money, useCart } from './cart'
 import { whatsapp } from './kitchen'
 
 type Entry = {
@@ -13,11 +15,10 @@ type Entry = {
   starting_at: boolean
 }
 
+const cart = useCart()
 const menu = ref<Entry[]>([])
 const state = ref<'loading' | 'ready' | 'error'>('loading')
 const categories = computed(() => [...new Set(menu.value.map(entry => entry.category))])
-const formatter = new Intl.NumberFormat('en-ZM', { maximumFractionDigits: 2 })
-const money = (ngwee: number) => 'K' + formatter.format(ngwee / 100)
 
 function price(entry: Entry) {
   if (entry.starting_at) return 'From ' + money(entry.price_ngwee)
@@ -62,10 +63,17 @@ onMounted(loadMenu)
             <span v-if="entry.option"> · {{ entry.option }}</span>
             <p v-if="entry.description">{{ entry.description }}</p>
           </div>
-          <strong>{{ price(entry) }}</strong>
+          <div class="menu-action">
+            <strong>{{ price(entry) }}</strong>
+            <button v-if="!entry.starting_at && entry.max_price_ngwee === null"
+              class="button" type="button" :aria-label="'Add ' + entry.name + ' ' + entry.option"
+              :disabled="cart.submitting || (cart.lines.find(line => line.id === entry.id)?.quantity ?? 0) >= 20 || (cart.lines.length >= 30 && !cart.lines.some(line => line.id === entry.id))"
+              @click="cart.add(entry)">Add</button>
+          </div>
         </li>
       </ul>
     </section>
+    <Checkout @refresh-menu="loadMenu" />
     <a class="button after-grid" :href="whatsapp('Hi Chef Percy, I’d like to ask about a pre-order or catering quote.')">Message Percy on WhatsApp</a>
   </main>
 </template>

@@ -11,6 +11,12 @@
 <main>
   <header><p>CHÈF PERCY’S KITCHEN · OWNER</p><h1>Menu management</h1></header>
   <p id="status" role="status"></p>
+  <section class="order-queue" aria-labelledby="orders-title">
+    <h2 id="orders-title">Recent order requests</h2>
+    <button id="refresh-orders" type="button">Refresh orders</button>
+    <p id="orders-status" role="status"></p>
+    <ul id="orders"></ul>
+  </section>
   <div class="layout">
     <section aria-labelledby="entries-title">
       <h2 id="entries-title">Menu entries</h2>

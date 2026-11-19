@@ -43,3 +43,12 @@ h1{font-size:clamp(2.8rem,7vw,6.3rem);letter-spacing:-.05em} h1 em{color:#ffc278
 .menu-category li{border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding:.75rem 0}
 .menu-category li p{color:#654d3c;font-size:.95rem;margin:.25rem 0 0}
 .menu-category li>strong{flex-shrink:0;color:var(--rust)}
+
+.menu-action{display:flex;align-items:center;gap:.5rem}
+.checkout{margin-top:1.75rem;border:1px solid var(--line);border-radius:.75rem;padding:1rem;background:#fffaf3;overflow-wrap:anywhere}
+.checkout h2{font-size:clamp(1.4rem,4vw,2rem)}
+.checkout p,.checkout label{display:block;margin:.75rem 0}
+.checkout input,.checkout select,.checkout textarea{display:block;width:100%;max-width:30rem;border:1px solid #b38c70;border-radius:.35rem;padding:.5rem;margin-top:.25rem}
+.cart-lines li{display:flex;align-items:center;gap:.5rem;padding:.35rem 0}
+.cart-lines li>span:first-child{flex:1}
+.button:disabled{opacity:.6;cursor:default}

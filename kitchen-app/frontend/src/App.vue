@@ -8,6 +8,7 @@ const open = ref(false)
 const navigation = [
   { name: 'home', label: 'Home' }, { name: 'food', label: 'Our food' },
   { name: 'menu', label: 'Menu' },
+  { name: 'orders', label: 'Orders' },
   { name: 'catering', label: 'Catering' }, { name: 'about', label: 'Meet Percy' },
   { name: 'contact', label: 'Contact' },
 ]

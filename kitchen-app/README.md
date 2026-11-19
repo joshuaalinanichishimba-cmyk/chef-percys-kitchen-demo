@@ -47,3 +47,9 @@ The frontend production build runs Vue TypeScript checks. With the local Postgre
 - Owner menu changes persist in PostgreSQL. Use the visibility checkbox to take an item off the customer menu. The seafood add-on retains the poster's range, and catering prices display as starting prices.
 
 Existing Phase 1 installations should run `alembic upgrade head` to create and seed the 24 menu entries. The migration leaves the business profile intact. Before rolling back the menu migration in a live database, back up the menu because its table will be dropped.
+
+## Phase 3 and Windows launcher
+
+From the repository root, double-click `Start Chèf Percy.cmd` to migrate the local Windows PostgreSQL database, start the app, and open the customer menu. The launcher uses `kitchen-app\backend\.venv` and expects PostgreSQL on port 5432 with a `percy` database and account. Keep the launcher window open. The password it asks for belongs to PostgreSQL. The dashboard username and generated password are shown after the migration.
+
+Customers can add fixed-price items to a cart, request pickup or Yango delivery, and look up the confirmation using its reference. Recent references are saved in the browser. Quote-only items still use WhatsApp. PostgreSQL stores the submitted items and prices as they were at checkout. The owner dashboard lists the 50 newest requests with their contact details. A request is received on submission. Availability, delivery fees and payment are confirmed by Percy. Online payments and order status changes belong to later phases.
