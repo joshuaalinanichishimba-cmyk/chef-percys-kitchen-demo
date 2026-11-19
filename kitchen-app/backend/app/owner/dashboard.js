@@ -123,7 +123,8 @@ async function refreshOrders() {
       summary.textContent = [
         new Date(order.created_at).toLocaleString('en-ZM', { timeZone: 'Africa/Johannesburg' }),
         order.fulfillment === 'pickup' ? 'Pickup' : 'Yango · ' + order.address,
-        currency.format(order.total_ngwee / 100),
+        currency.format(order.total_ngwee / 100) + ' food subtotal',
+        currency.format(order.paid_ngwee / 100) + ' recorded paid',
       ].join(' · ')
       const items = document.createElement('p')
       items.textContent = order.items.map(line => line.quantity + ' × ' + line.name + ' ' + line.option).join(', ')

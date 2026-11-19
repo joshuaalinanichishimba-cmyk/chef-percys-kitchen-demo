@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, JSON, String, func
+from sqlalchemy import BigInteger, CheckConstraint, Date, DateTime, ForeignKey, JSON, String, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -72,4 +72,38 @@ class OrderStatusEvent(Base):
     reference: Mapped[str] = mapped_column(ForeignKey("customer_order.reference", ondelete="CASCADE"), index=True)
     actor: Mapped[str] = mapped_column(String(16))
     status: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CateringInquiry(Base):
+    __tablename__ = "catering_inquiry"
+
+    reference: Mapped[str] = mapped_column(String(36), primary_key=True)
+    customer_name: Mapped[str] = mapped_column(String(120))
+    phone: Mapped[str] = mapped_column(String(24))
+    event_date: Mapped[date] = mapped_column(Date)
+    guests: Mapped[int]
+    venue: Mapped[str] = mapped_column(String(200))
+    details: Mapped[str] = mapped_column(String(800))
+    status: Mapped[str] = mapped_column(String(16), server_default="received")
+    quote_ngwee: Mapped[int | None] = mapped_column(BigInteger)
+    deposit_ngwee: Mapped[int | None] = mapped_column(BigInteger)
+    quote_notes: Mapped[str] = mapped_column(String(800), server_default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class VerifiedPayment(Base):
+    __tablename__ = "verified_payment"
+    __table_args__ = (
+        UniqueConstraint("channel", "transaction_reference", name="uq_verified_payment_reference"),
+        CheckConstraint("amount_ngwee > 0", name="ck_verified_payment_amount"),
+        CheckConstraint("(order_reference IS NULL) <> (catering_reference IS NULL)", name="ck_verified_payment_target"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_reference: Mapped[str | None] = mapped_column(ForeignKey("customer_order.reference"), index=True)
+    catering_reference: Mapped[str | None] = mapped_column(ForeignKey("catering_inquiry.reference"), index=True)
+    channel: Mapped[str] = mapped_column(String(12))
+    transaction_reference: Mapped[str] = mapped_column(String(80))
+    amount_ngwee: Mapped[int] = mapped_column(BigInteger)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

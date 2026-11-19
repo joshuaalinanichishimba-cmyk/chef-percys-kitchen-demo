@@ -15,12 +15,13 @@ import webbrowser
 import uvicorn
 
 
-def open_menu_when_ready() -> None:
+def open_pages_when_ready() -> None:
     for _ in range(50):
         sleep(0.2)
         try:
             with urlopen("http://127.0.0.1:8000/api/health", timeout=0.5):
                 webbrowser.open("http://127.0.0.1:8000/#/menu")
+                webbrowser.open("http://127.0.0.1:8000/owner", new=2)
                 return
         except OSError:
             continue
@@ -41,7 +42,7 @@ def main() -> None:
     print("Owner dashboard: http://127.0.0.1:8000/owner", flush=True)
     print("Dashboard username: owner", flush=True)
     print("Dashboard password for this run:", os.environ["OWNER_PASSWORD"], flush=True)
-    worker = Thread(target=open_menu_when_ready, daemon=True)
+    worker = Thread(target=open_pages_when_ready, daemon=True)
     worker.start()
     uvicorn.run("app.main:app", host="127.0.0.1", port=8000)
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CateringInquiry from './CateringInquiry.vue'
 import { contacts, filters, location, photos, useGallery, whatsapp } from './kitchen'
 defineProps<{ page: string }>()
 const gallery = useGallery()
@@ -88,6 +89,7 @@ const catering = whatsapp('Hi Chef Percy, I’d like to enquire about catering f
       </div>
       <img src="/images/spread.webp" alt="A variety of dishes from Chef Percy’s kitchen arranged for sharing">
     </div>
+    <CateringInquiry />
   </main>
 
   <main v-else-if="page === 'about'" class="wrap section inside" tabindex="-1">

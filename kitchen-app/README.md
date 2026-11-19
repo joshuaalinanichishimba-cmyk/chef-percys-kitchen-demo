@@ -61,3 +61,11 @@ The owner can confirm, cancel, prepare, mark ready and complete order requests f
 Kitchen staff open `/kitchen` and sign in as `kitchen`, using the separate `KITCHEN_PASSWORD` secret (at least 32 characters). The board refreshes every five seconds. Staff can move confirmed tickets into preparation and mark them ready. They see meal details and pickup or delivery type. Customer names, phone numbers, addresses, menu controls and order limits are available to the owner only. This setup uses one shared kitchen-role credential. The Windows launcher generates both dashboard credentials for that run. Share only the kitchen credential with staff, and run local access on the PC hosting FastAPI. Use HTTPS and managed secrets when hosting outside localhost.
 
 Customers can look up their order reference and refresh its latest status. Confirming an order does not verify payment.
+
+## Phase 5: catering and payment records
+
+- Customers submit a catering inquiry from the Catering page and use its reference to check the quote, deposit, balance and booking status.
+- The owner records a quote and customer-facing notes. Confirm a booking after the customer accepts and any required deposit is recorded. Venue and personal contact details stay in the owner dashboard.
+- The owner verifies a payment against the wallet, bank or receipt before recording it. Records are tied to a food order or catering inquiry. Duplicate transaction references cannot credit multiple requests. Food balances exclude delivery charges. Use unique receipt references for cash.
+- The app tracks verified amounts and outstanding balances. It does not initiate charges, validate provider transactions automatically, or issue refunds. A cancelled booking retains its payment history for reconciliation.
+- The Windows launcher opens both the customer menu and the owner dashboard once FastAPI is ready. Use the `owner` password printed in the launcher window. Open the kitchen board separately with the kitchen credential.

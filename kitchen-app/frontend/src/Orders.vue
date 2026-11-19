@@ -8,6 +8,7 @@ type Receipt = {
   status: keyof typeof labels
   fulfillment: 'pickup' | 'delivery'
   total_ngwee: number
+  paid_ngwee: number
   items: { name: string; option: string; quantity: number; unit_price_ngwee: number }[]
 }
 const labels = {
@@ -63,6 +64,7 @@ watch([() => route.query.reference, attempt], async ([value], _, onCleanup) => {
         </li>
       </ul>
       <p><strong>Food subtotal {{ money(receipt.total_ngwee) }}</strong></p>
+      <p>Payment recorded by Percy {{ money(receipt.paid_ngwee) }} · Food balance {{ money(receipt.total_ngwee - receipt.paid_ngwee) }}</p>
       <p>{{ receipt.fulfillment === 'pickup' ? 'Pickup at L237, CBU Campus.' : 'Yango delivery requested.' }} <span v-if="receipt.status === 'received'">Percy will confirm availability and payment arrangements.</span></p>
     </section>
     <section v-if="history.length" class="checkout" aria-labelledby="history-title">

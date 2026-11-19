@@ -11,6 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
 from .menu import CSP, Database, PRIVATE, WriteRequest, owner
+from .bookings import paid_total
 from .models import CustomerOrder, MenuEntry, OrderSettings, OrderStatusEvent
 from .owner_auth import require_kitchen
 
@@ -73,6 +74,7 @@ class Receipt(BaseModel):
     total_ngwee: int
     created_at: datetime
     status: Status
+    paid_ngwee: int = 0
 
 
 class OwnerOrder(Receipt):
@@ -94,12 +96,12 @@ def submit_order(data: OrderRequest, db: Database, response: Response):
     request_hash = sha256(data.model_dump_json().encode()).hexdigest()
     existing = db.get(CustomerOrder, reference)
     if existing is not None:
-        return match_request(existing, request_hash)
+        return receipt_view(db, match_request(existing, request_hash))
 
     settings = db.get_one(OrderSettings, 1, with_for_update=True)
     existing = db.get(CustomerOrder, reference)
     if existing is not None:
-        return match_request(existing, request_hash)
+        return receipt_view(db, match_request(existing, request_hash))
     if settings.daily_limit is not None and requests_today(db) >= settings.daily_limit:
         raise HTTPException(409, "Today's order request limit has been reached.")
 
@@ -140,13 +142,18 @@ def get_receipt(reference: UUID, db: Database, response: Response):
     order = db.get(CustomerOrder, str(reference))
     if order is None:
         raise HTTPException(404, "Order reference not found.")
-    return order
+    return receipt_view(db, order)
+
+
+def receipt_view(db: Database, order: CustomerOrder) -> Receipt:
+    return Receipt.model_validate(order).model_copy(update={"paid_ngwee": paid_total(db, "orders", order.reference)})
 
 
 @owner.get("/owner/api/orders", response_model=list[OwnerOrder])
 def recent_orders(db: Database, response: Response):
     response.headers.update(PRIVATE)
-    return db.scalars(select(CustomerOrder).order_by(CustomerOrder.created_at.desc()).limit(50)).all()
+    rows = db.scalars(select(CustomerOrder).order_by(CustomerOrder.created_at.desc()).limit(50))
+    return [owner_view(db, row) for row in rows]
 
 
 def requests_today(db: Database) -> int:
@@ -197,7 +204,13 @@ def transition(db: Database, reference: UUID, target: Status, actor: str) -> Cus
 @owner.put("/owner/api/orders/{reference}/status", response_model=OwnerOrder, dependencies=[WriteRequest])
 def owner_status(reference: UUID, data: StatusChange, db: Database, response: Response):
     response.headers.update(PRIVATE)
-    return transition(db, reference, data.status, "owner")
+    return owner_view(db, transition(db, reference, data.status, "owner"))
+
+
+def owner_view(db: Database, order: CustomerOrder) -> OwnerOrder:
+    return OwnerOrder.model_validate(order).model_copy(
+        update={"paid_ngwee": paid_total(db, "orders", order.reference)}
+    )
 
 
 class KitchenLine(BaseModel):

@@ -6,6 +6,7 @@
 <title>Menu management | Chèf Percy’s Kitchen</title>
 <link rel="stylesheet" href="/owner/assets/dashboard.css">
 <script type="module" src="/owner/assets/dashboard.js"></script>
+<script type="module" src="/owner/assets/bookings.js"></script>
 </head>
 <body>
 <main>
@@ -26,6 +27,31 @@
     <button id="refresh-orders" type="button">Refresh orders</button>
     <p id="orders-status" role="status"></p>
     <ul id="orders"></ul>
+  </section>
+  <section class="order-queue" aria-labelledby="bookings-title">
+    <h2 id="bookings-title">Catering inquiries and bookings</h2>
+    <button id="refresh-bookings" type="button">Refresh inquiries</button>
+    <p id="bookings-status" role="status"></p>
+    <ul id="bookings"></ul>
+  </section>
+  <section class="order-queue" aria-labelledby="payments-title">
+    <h2 id="payments-title">Verified payments</h2>
+    <p>Check the transaction against the actual payment record before saving it.</p>
+    <form id="record-payment">
+      <label>Payment for <select name="target"><option value="orders">Food order</option><option value="catering">Catering</option></select></label>
+      <label>Order or catering reference <input name="reference" maxlength="36" required></label>
+      <button id="lookup-payments" type="button">View recorded payments</button>
+      <label>Channel <select name="channel">
+        <option value="airtel">Airtel Money</option><option value="mtn">MTN MoMo</option>
+        <option value="cash">Cash receipt</option><option value="bank">Bank transfer</option>
+      </select></label>
+      <label>Transaction or receipt reference <input name="transaction_reference" maxlength="80" required></label>
+      <label>Amount (K) <input name="amount" type="number" min="0.01" max="1000000" step="0.01" required></label>
+      <label><input name="verified" type="checkbox" required> I verified that this payment was received</label>
+      <button type="submit">Record verified payment</button>
+    </form>
+    <p id="payment-status" role="status"></p>
+    <ul id="payment-list"></ul>
   </section>
   <div class="layout">
     <section aria-labelledby="entries-title">
